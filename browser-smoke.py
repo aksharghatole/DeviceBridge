@@ -21,6 +21,12 @@ try:
   a.evaluate("navigator.clipboard.writeText('clipboard sample')")
   a.click('#pasteClipboard'); expect(a.locator('#message')).to_have_value('clipboard sample')
   a.click('#sendText'); expect(b.locator('#activity')).to_contain_text('clipboard sample')
+  # Deliberately close one channel and require a fresh open connection before sending files.
+  a.evaluate("window.testOldPeer = Array.from(peers.values())[0]; window.testOldPeer.dc.close()")
+  a.wait_for_function("Array.from(peers.values()).some(p => p !== window.testOldPeer && p.dc?.readyState === 'open')",timeout=20000)
+  expect(b.locator('#recipient option')).to_have_text('Laptop',timeout=15000)
+  expect(a.locator('#sharedNote')).to_have_value('Updated by phone')
+  a.fill('#message','Recovered connection'); a.click('#sendText'); expect(b.locator('#activity')).to_contain_text('Recovered connection')
   payload=bytes(range(256))*4096
   a.set_input_files('#files',{'name':'test.bin','mimeType':'application/octet-stream','buffer':payload}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Delivered',timeout=15000)
   with b.expect_download() as d: b.get_by_role('button',name='Download',exact=True).click()
