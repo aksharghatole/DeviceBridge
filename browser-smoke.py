@@ -10,6 +10,7 @@ try:
   for x in [a,b]:
    x.on('pageerror',lambda e:print('PAGE ERROR',e))
    x.goto('http://localhost:3418')
+  a.click('#theme'); expect(a.locator('html')).to_have_attribute('data-theme','light'); a.reload(); expect(a.locator('html')).to_have_attribute('data-theme','light'); a.check('#historyEnabled'); b.check('#historyEnabled');
   a.fill('#name','Laptop'); a.click('#create'); expect(a.locator('#roomCode')).not_to_have_text(''); code=a.locator('#roomCode').inner_text(); expect(a.locator('#qr')).to_be_visible(); a.wait_for_function("document.querySelector('#qr').complete && document.querySelector('#qr').naturalWidth > 0")
   b.fill('#name','Phone'); b.fill('#roomInput',code); b.click('#joinForm button'); expect(a.locator('#recipient option')).to_have_text('Phone',timeout=15000); expect(b.locator('#recipient option')).to_have_text('Laptop',timeout=15000)
   a.fill('#message','Hello from laptop'); a.click('#sendText'); expect(b.locator('#activity')).to_contain_text('Hello from laptop'); b.fill('#message','Hello from phone'); b.click('#sendText'); expect(a.locator('#activity')).to_contain_text('Hello from phone')
@@ -17,6 +18,11 @@ try:
   a.set_input_files('#files',{'name':'test.bin','mimeType':'application/octet-stream','buffer':payload}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Delivered',timeout=15000)
   with b.expect_download() as d: b.get_by_role('button',name='Download',exact=True).click()
   assert Path(d.value.path()).read_bytes()==payload
+  expect(a.locator('#savedHistory')).to_contain_text('test.bin'); expect(b.locator('#savedHistory')).to_contain_text('test.bin')
+  import base64
+  png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/x3sAAAAASUVORK5CYII=')
+  a.set_input_files('#files',{'name':'preview.png','mimeType':'image/png','buffer':png}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); b.get_by_role('button',name='Preview',exact=True).click(); expect(b.locator('img.media-preview')).to_be_visible(); b.get_by_role('button',name='Hide preview',exact=True).click(); expect(b.locator('img.media-preview')).to_have_count(0)
+  b.click('#clearHistory'); expect(b.locator('#savedHistory')).to_contain_text('No saved file history')
   a.set_input_files('#files',{'name':'decline.txt','mimeType':'text/plain','buffer':b'no'}); a.click('#sendFiles'); b.get_by_role('button',name='Decline',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Declined or recipient busy'); b.click('#leave'); expect(a.locator('#recipient option')).to_have_text('No connected devices'); browser.close()
   print('PASS: QR image, pairing, bidirectional text, byte-identical 1 MiB download, decline, leave, mobile layout.')
 finally:
