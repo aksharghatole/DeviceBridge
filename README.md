@@ -1,4 +1,4 @@
-# DeviceBridge v1.5
+# DeviceBridge v1.6
 
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
@@ -28,6 +28,13 @@ The free service may sleep after 15 minutes without inbound traffic. It can take
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
 
 Default ICE configuration uses Google's public STUN endpoint. Some networks require a TURN relay; set `ICE_SERVERS` to a JSON array of RTCIceServer objects (e.g. `[ {"urls":"stun:stun.l.google.com:19302"}, {"urls":"turn:YOUR_HOST:3478","username":"...","credential":"..."} ]`). Use short-lived TURN credentials in production; configured credentials are visible to clients. TURN can cost money and relays encrypted traffic. No hosted URL or TURN service is included.
+
+## What's new in v1.6
+
+- Interrupted in-memory transfers can resume from the receiver's retained byte offset after the same peer reconnects. The sender explicitly requests recovery, and the receiver must approve it. Both pages must remain open in the same room.
+- A single receiver-side partial file is retained in memory for five minutes (up to the existing 256 MiB limit). It can be discarded explicitly; leaving the room or refreshing loses it. A new incoming transfer is rejected while a checkpoint is retained.
+- Sender recalculates the original prefix CRC32 before continuing and the receiver validates the entire file at completion. Interrupted direct-to-disk transfers still restart from scratch.
+- Recovery is not persistent across browser or server restarts. It does not store any file on the signaling server.
 
 ## What's new in v1.5
 
@@ -70,7 +77,7 @@ Default ICE configuration uses Google's public STUN endpoint. Some networks requ
 - Up to six devices, QR/invite/code pairing, recipient selection, device status.
 - Multiple files queued sequentially; consent, decline, progress, cancellation and receipt acknowledgment. Maximum 256 MiB per in-memory file or 1 GiB with supported direct disk saving, and one active incoming file per browser. Receiving uses browser memory; large files may fail on low-memory devices. Clear completed activity to free retained blobs.
 - Text/link sharing and explicit copy-to-clipboard (no background clipboard reading).
-- Ephemeral activity; clearing or leaving discards unsaved files. No automatic transfer resume, offline messaging, device authentication beyond possession of the invitation, or background transfers. Rooms disappear on restart or once empty; disconnected members expire after two minutes.
+- Ephemeral activity; clearing or leaving discards unsaved files. No unattended transfer resume, offline messaging, device authentication beyond possession of the invitation, or background transfers. Rooms disappear on restart or once empty; disconnected members expire after two minutes.
 - Use only with trusted peers and a trusted signaling host. WebRTC encrypts transport, but the current prototype does not independently verify peer identity or protect against a malicious signaling service. Do not publish invitations. For production, add independently verified pairing, session hardening, anti-abuse controls, monitoring, and browser/device testing. Avoid logging query strings (event-stream session tokens appear in URLs). The service exposes no file upload endpoint.
 
 ## Verification

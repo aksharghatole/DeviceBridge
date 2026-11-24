@@ -61,6 +61,28 @@ try:
   expect(b.locator('#activity .item').filter(has_text='disk-test.bin')).to_contain_text('Saved to disk',timeout=30000)
   expect(a.locator('#activity .item').filter(has_text='disk-test.bin')).to_contain_text('Delivered')
   assert b.evaluate("async () => { const f=await (await (await navigator.storage.getDirectory()).getFileHandle('disk-test.bin')).getFile(); const bytes=new Uint8Array(await f.arrayBuffer()); return bytes.length===4194304 && bytes.every((v,i)=>v===i%256); }")
+  # Interrupt a memory transfer after the receiver has retained a verified prefix.
+  a.evaluate("() => { window.recoveryOriginalStats=transferStats; transferStats=(act,n,total,verb)=>{window.recoveryOriginalStats(act,n,total,verb); const p=Array.from(peers.values())[0],t=p?.sending; if(t?.f.name==='recover.bin' && !t.paused && !window.didRecoveryPause && n>=1048576){window.didRecoveryPause=true;togglePause(p,t);} }; }")
+  a.set_input_files('#files',{'name':'recover.bin','mimeType':'application/octet-stream','buffer':payload*8})
+  a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click()
+  expect(a.get_by_role('button',name='Resume',exact=True)).to_be_visible()
+  deadline=time.monotonic()+10
+  while time.monotonic()<deadline:
+   if b.evaluate("() => Array.from(peers.values())[0]?.receiving?.bytes>=1048576"): break
+   time.sleep(.1)
+  else: raise AssertionError("No partial bytes received before interruption")
+  b.evaluate("() => Array.from(peers.values())[0].dc.close()")
+  expect(b.locator('#activity .item').filter(has_text='recover.bin')).to_contain_text('retained for 5 minutes')
+  expect(a.locator('#recipient option')).to_have_text('Phone',timeout=20000)
+  expect(b.locator('#recipient option')).to_have_text('Laptop',timeout=20000)
+  a.get_by_role('button',name='Resume interrupted',exact=True).click()
+  expect(b.locator('#activity .item').filter(has_text='recover.bin')).to_contain_text('Resume from 1.0 MiB')
+  b.get_by_role('button',name='Resume receiving',exact=True).click()
+  item=b.locator('#activity .item').filter(has_text='recover.bin')
+  expect(item).to_contain_text('CRC32 verified',timeout=30000)
+  with b.expect_download() as recovered: item.get_by_role('button',name='Download',exact=True).click()
+  assert Path(recovered.value.path()).read_bytes()==payload*8
+  a.evaluate("() => { transferStats=window.recoveryOriginalStats; }")
   from zipfile import ZipFile
   with b.expect_download() as batch: b.click('#downloadZip')
   with ZipFile(batch.value.path()) as z:
