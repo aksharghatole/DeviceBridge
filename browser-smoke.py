@@ -104,7 +104,22 @@ try:
   a.set_input_files('#files',{'name':'decline.txt','mimeType':'text/plain','buffer':b'no'}); a.click('#sendFiles'); b.get_by_role('button',name='Decline',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Declined or recipient busy'); b.click('#leave'); expect(b.locator('#sharedNote')).to_have_value(''); expect(a.locator('#recipient option')).to_have_text('No connected devices'); b.evaluate("navigator.serviceWorker.ready")
   b.wait_for_function("navigator.serviceWorker.controller !== null")
   b.context.set_offline(True); b.reload(); expect(b.locator('#offlineBanner')).to_be_visible(); b.click('#create'); expect(b.locator('#notice')).to_contain_text('Connect to the internet')
-  b.context.set_offline(False); browser.close()
+  b.context.set_offline(False)
+  # Test strict mode independently from the default compatibility flow.
+  c=browser.new_page(); e=browser.new_page()
+  for page in [c,e]:
+   page.goto('http://localhost:3418'); page.check('#strictPairing'); page.on('dialog',lambda d:d.accept())
+  c.fill('#name','Verified laptop'); c.click('#create'); expect(c.locator('#roomCode')).not_to_have_text('')
+  e.fill('#name','Verified phone'); e.fill('#roomInput',c.locator('#roomCode').inner_text()); e.click('#joinForm button')
+  expect(c.get_by_role('button',name='Verify code',exact=True)).to_be_visible(timeout=15000)
+  expect(e.get_by_role('button',name='Verify code',exact=True)).to_be_visible(timeout=15000)
+  assert c.locator('.pair-code').inner_text()==e.locator('.pair-code').inner_text()
+  expect(c.locator('#recipient option')).to_have_text('No connected devices')
+  c.fill('#message','Protected message'); expect(c.locator('#sendText')).to_be_disabled()
+  c.get_by_role('button',name='Verify code',exact=True).click(); e.get_by_role('button',name='Verify code',exact=True).click()
+  expect(c.locator('#recipient option')).to_have_text('Verified phone'); c.click('#sendText')
+  expect(e.locator('#activity')).to_contain_text('Protected message')
+  browser.close()
   print('PASS: QR image, pairing, bidirectional text, byte-identical 1 MiB download, decline, leave, mobile layout.')
 finally:
  p.terminate();p.wait()

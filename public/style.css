@@ -5,3 +5,5 @@
 .activity-tools,.install-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.install-row{justify-content:center;margin-top:16px}.camera-control{margin-right:8px}#folderStatus{display:block;color:var(--muted)}#offlineBanner{margin:0 auto 15px;max-width:660px}.activity-tools button{font-size:12px;padding:8px 12px}
 
 .quick-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.quick-nav a{color:var(--text);text-decoration:none;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:650}.quick-nav a:focus-visible{outline:2px solid var(--accent)}#pasteClipboard{margin-top:8px}#diagnosticResult{overflow-wrap:anywhere;font-size:12px}#sharedNote{margin-top:8px}#pairPanel,#sendPanel,#notesPanel,#activityPanel{scroll-margin-top:12px}
+
+.pair-code{font-family:monospace;letter-spacing:.04em;overflow-wrap:anywhere;margin:5px 0}.setup .history-choice{margin-top:12px}.device .ghost{margin-top:5px}
