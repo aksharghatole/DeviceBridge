@@ -19,6 +19,7 @@ const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
  try{
  const u=new URL(req.url,'http://localhost');const route=u.pathname;
+ if(req.method==='GET'&&route==='/health')return json(res,200,{ok:true});
  if(req.method==='GET'&&assets[route]){const [file,type]=assets[route];res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-cache'});return res.end(fs.readFileSync(path.join(__dirname,'public',file)));}
  if(req.method==='GET'&&route==='/api/config')return json(res,200,{iceServers});
  if(req.method==='GET'&&route==='/api/qr'){
