@@ -1,4 +1,4 @@
-# DeviceBridge v1.7
+# DeviceBridge v1.8
 
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
@@ -28,6 +28,13 @@ The free service may sleep after 15 minutes without inbound traffic. It can take
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
 
 Default ICE configuration uses Google's public STUN endpoint. Some networks require a TURN relay; set `ICE_SERVERS` to a JSON array of RTCIceServer objects (e.g. `[ {"urls":"stun:stun.l.google.com:19302"}, {"urls":"turn:YOUR_HOST:3478","username":"...","credential":"..."} ]`). Use short-lived TURN credentials in production; configured credentials are visible to clients. TURN can cost money and relays encrypted traffic. No hosted URL or TURN service is included.
+
+## What's new in v1.8
+
+- One-to-one live screen sharing with an explicit browser capture picker and separate recipient approval. Video only; no microphone, recording or remote control.
+- Screen media uses a separate WebRTC peer connection; negotiation travels through the existing data channel and respects strict pairing. Stop controls and capture-end handling close the media session. Disconnecting stops sharing instead of restarting it automatically.
+- Screen capture support varies by platform, particularly mobile browsers; receiving is possible without capture support. Native picker and physical-device performance still need manual testing.
+- Browser tests substitute a generated canvas stream for the native capture picker, exercising recipient consent, live video delivery and stop controls.
 
 ## What's new in v1.7
 
