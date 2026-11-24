@@ -12,6 +12,17 @@ A browser-based cross-device sharing prototype. Pair devices using an invite lin
 
 Some mobile browsers restrict WebRTC or clipboard access on insecure HTTP. If local HTTP does not work, deploy over HTTPS. Both browser tabs must remain open. Do not use the localhost invite on a second physical device.
 
+## Deploy online (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Faksharghatole%2FDeviceBridge)
+
+1. Open the deployment link and sign in to Render. Connect your own GitHub account if prompted.
+2. Review the Blueprint (`render.yaml`), choose the **Free** web service, and approve deployment. No database is needed.
+3. Open the HTTPS URL shown in your Render dashboard on both devices. Create a room on one and join on the other.
+4. Test text, then a small file, and verify that the recipient receives the exact file. The health endpoint is `/health`.
+
+The free service may sleep after 15 minutes without inbound traffic. It can take time to wake, and rooms are lost on restart or deployment. This is hobby hosting, not an availability guarantee. Auto-deploy is configured for the main branch. Never add long-lived TURN secrets to this public repository.
+
 ## Public HTTPS deployment
 
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
