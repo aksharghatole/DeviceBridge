@@ -14,6 +14,23 @@ try:
   a.fill('#name','Laptop'); a.click('#create'); expect(a.locator('#roomCode')).not_to_have_text(''); code=a.locator('#roomCode').inner_text(); expect(a.locator('#qr')).to_be_visible(); a.wait_for_function("document.querySelector('#qr').complete && document.querySelector('#qr').naturalWidth > 0")
   b.fill('#name','Phone'); b.fill('#roomInput',code); b.click('#joinForm button'); expect(a.locator('#recipient option')).to_have_text('Phone',timeout=15000); expect(b.locator('#recipient option')).to_have_text('Laptop',timeout=15000)
   a.fill('#message','Hello from laptop'); a.click('#sendText'); expect(b.locator('#activity')).to_contain_text('Hello from laptop'); b.fill('#message','Hello from phone'); b.click('#sendText'); expect(a.locator('#activity')).to_contain_text('Hello from phone')
+  a.fill('#sharedNote','Room note from laptop'); expect(b.locator('#sharedNote')).to_have_value('Room note from laptop')
+  b.fill('#sharedNote','Updated by phone'); expect(a.locator('#sharedNote')).to_have_value('Updated by phone')
+  a.click('#diagnostics'); expect(a.locator('#diagnosticResult')).to_contain_text('Signaling: connected')
+  a.context.grant_permissions(['clipboard-read','clipboard-write'])
+  a.evaluate("navigator.clipboard.writeText('clipboard sample')")
+  a.click('#pasteClipboard'); expect(a.locator('#message')).to_have_value('clipboard sample')
+  a.click('#sendText'); expect(b.locator('#activity')).to_contain_text('clipboard sample')
+  # Deliberately close one channel and require a fresh open connection before sending files.
+  a.evaluate("window.testOldPeer = Array.from(peers.values())[0]; window.testOldPeer.dc.close()")
+  deadline=time.monotonic()+20
+  while time.monotonic()<deadline:
+   if a.evaluate("() => Array.from(peers.values()).some(p => p !== window.testOldPeer && p.dc?.readyState === 'open')"): break
+   time.sleep(.2)
+  else: raise AssertionError("Peer did not reconnect with a new open channel")
+  expect(b.locator('#recipient option')).to_have_text('Laptop',timeout=15000)
+  expect(a.locator('#sharedNote')).to_have_value('Updated by phone')
+  a.fill('#message','Recovered connection'); a.click('#sendText'); expect(b.locator('#activity')).to_contain_text('Recovered connection')
   payload=bytes(range(256))*4096
   a.set_input_files('#files',{'name':'test.bin','mimeType':'application/octet-stream','buffer':payload}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Delivered',timeout=15000)
   with b.expect_download() as d: b.get_by_role('button',name='Download',exact=True).click()
@@ -40,7 +57,7 @@ try:
     assert z.read('sample-folder/hello.txt')==b'hello'
     assert z.read('sample-folder/nested/world.txt')==b'world'
   b.click('#clearHistory'); expect(b.locator('#savedHistory')).to_contain_text('No saved file history')
-  a.set_input_files('#files',{'name':'decline.txt','mimeType':'text/plain','buffer':b'no'}); a.click('#sendFiles'); b.get_by_role('button',name='Decline',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Declined or recipient busy'); b.click('#leave'); expect(a.locator('#recipient option')).to_have_text('No connected devices'); b.evaluate("navigator.serviceWorker.ready")
+  a.set_input_files('#files',{'name':'decline.txt','mimeType':'text/plain','buffer':b'no'}); a.click('#sendFiles'); b.get_by_role('button',name='Decline',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Declined or recipient busy'); b.click('#leave'); expect(b.locator('#sharedNote')).to_have_value(''); expect(a.locator('#recipient option')).to_have_text('No connected devices'); b.evaluate("navigator.serviceWorker.ready")
   b.wait_for_function("navigator.serviceWorker.controller !== null")
   b.context.set_offline(True); b.reload(); expect(b.locator('#offlineBanner')).to_be_visible(); b.click('#create'); expect(b.locator('#notice')).to_contain_text('Connect to the internet')
   b.context.set_offline(False); browser.close()
