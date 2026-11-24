@@ -13,7 +13,7 @@ const broadcast=r=>{const peers=list(r); for(const p of r.members.values())push(
 function remove(r,p){if(p.stream){p.stream.end();p.stream=null;}r.members.delete(p.id);broadcast(r);if(!r.members.size)rooms.delete(r.code);}
 async function body(req){let data='';for await(const chunk of req){data+=chunk;if(data.length>100000)throw Error('Request too large');}return JSON.parse(data||'{}');}
 function auth(r,token){return r&&Array.from(r.members.values()).find(p=>p.token===token);}
-const assets={'/':['index.html','text/html; charset=utf-8'],'/app.js':['app.js','text/javascript; charset=utf-8'],'/style.css':['style.css','text/css; charset=utf-8'],'/manifest.webmanifest':['manifest.webmanifest','application/manifest+json'],'/icon.svg':['icon.svg','image/svg+xml']};
+const assets={'/sw.js':['sw.js','text/javascript; charset=utf-8'],'/zip.js':['zip.js','text/javascript; charset=utf-8'],'/':['index.html','text/html; charset=utf-8'],'/app.js':['app.js','text/javascript; charset=utf-8'],'/style.css':['style.css','text/css; charset=utf-8'],'/manifest.webmanifest':['manifest.webmanifest','application/manifest+json'],'/icon.svg':['icon.svg','image/svg+xml']};
 const iceServers=(()=>{try{return JSON.parse(process.env.ICE_SERVERS||'[{"urls":"stun:stun.l.google.com:19302"}]');}catch{return [];}})();
 const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");

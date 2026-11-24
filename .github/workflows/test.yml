@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check server.cjs && node --check public/app.js
+      - run: node --check server.cjs && node --check public/app.js && node --check public/zip.js && node --check public/sw.js
       - run: npm test
 
   browser-smoke:
