@@ -119,6 +119,19 @@ try:
   c.get_by_role('button',name='Verify code',exact=True).click(); e.get_by_role('button',name='Verify code',exact=True).click()
   expect(c.locator('#recipient option')).to_have_text('Verified phone'); c.click('#sendText')
   expect(e.locator('#activity')).to_contain_text('Protected message')
+  # Use a generated video track in CI; native screen-picker UI requires manual testing.
+  c.evaluate("() => { navigator.mediaDevices.getDisplayMedia=async()=>{const canvas=document.createElement('canvas');canvas.width=320;canvas.height=180;const ctx=canvas.getContext('2d');ctx.fillStyle='green';ctx.fillRect(0,0,320,180);const stream=canvas.captureStream(10);window.testScreenStream=stream;window.testScreenCanvas=canvas;window.testScreenInterval=setInterval(()=>{ctx.fillRect(0,0,320,180)},100);return stream;}; screenUI(); }")
+  c.click('#startScreen'); expect(e.locator('#screenConsent')).to_be_visible()
+  expect(e.locator('#screenVideo')).to_be_hidden()
+  e.click('#acceptScreen'); expect(e.locator('#screenVideo')).to_be_visible(timeout=20000)
+  deadline=time.monotonic()+20
+  while time.monotonic()<deadline:
+   if e.evaluate("() => document.querySelector('#screenVideo').videoWidth>0"): break
+   time.sleep(.2)
+  else: raise AssertionError("No live screen video frames")
+  c.click('#stopScreen'); expect(e.locator('#screenVideo')).to_be_hidden()
+  assert c.evaluate("() => window.testScreenStream.getTracks().every(t=>t.readyState==='ended')")
+  c.evaluate("() => clearInterval(window.testScreenInterval)")
   browser.close()
   print('PASS: QR image, pairing, bidirectional text, byte-identical 1 MiB download, decline, leave, mobile layout.')
 finally:
