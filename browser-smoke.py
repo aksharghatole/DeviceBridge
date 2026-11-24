@@ -35,6 +35,21 @@ try:
   a.set_input_files('#files',{'name':'test.bin','mimeType':'application/octet-stream','buffer':payload}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Delivered',timeout=15000)
   with b.expect_download() as d: b.get_by_role('button',name='Download',exact=True).click()
   assert Path(d.value.path()).read_bytes()==payload
+  expect(b.locator('#activity')).to_contain_text('CRC32 verified')
+  # Pause immediately after accepting a deliberately larger transfer.
+  a.evaluate("() => { const old=window.setTimeout; window.testOriginalSetTimeout=old; }")
+  a.set_input_files('#files',{'name':'pause.bin','mimeType':'application/octet-stream','buffer':payload*8})
+  a.click('#sendFiles')
+  # Schedule the pause at the first streaming task, before the first binary chunk.
+  a.evaluate("() => { const original=stream; window.testOriginalStream=original; stream=(p,t)=>{ const result=original(p,t); if(t.pauseButton) togglePause(p,t); return result; }; }")
+  b.get_by_role('button',name='Accept',exact=True).click()
+  expect(a.get_by_role('button',name='Resume',exact=True)).to_be_visible()
+  expect(b.locator('#activity')).to_contain_text('Paused by sender')
+  a.click('button:has-text("Resume")')
+  expect(b.locator('#activity .item').filter(has_text='pause.bin')).to_contain_text('CRC32 verified',timeout=30000)
+  with b.expect_download() as paused_dl: b.locator('#activity .item').filter(has_text='pause.bin').get_by_role('button',name='Download',exact=True).click()
+  assert Path(paused_dl.value.path()).read_bytes()==payload*8
+  a.evaluate("() => { stream=window.testOriginalStream; }")
   expect(a.locator('#savedHistory')).to_contain_text('test.bin'); expect(b.locator('#savedHistory')).to_contain_text('test.bin')
   import base64
   png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/x3sAAAAASUVORK5CYII=')
