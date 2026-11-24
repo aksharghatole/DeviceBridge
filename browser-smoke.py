@@ -22,8 +22,28 @@ try:
   import base64
   png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/x3sAAAAASUVORK5CYII=')
   a.set_input_files('#files',{'name':'preview.png','mimeType':'image/png','buffer':png}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); b.get_by_role('button',name='Preview',exact=True).click(); expect(b.locator('img.media-preview')).to_be_visible(); b.get_by_role('button',name='Hide preview',exact=True).click(); expect(b.locator('img.media-preview')).to_have_count(0)
+  from zipfile import ZipFile
+  with b.expect_download() as batch: b.click('#downloadZip')
+  with ZipFile(batch.value.path()) as z:
+   assert z.testzip() is None
+   assert z.read('test.bin')==payload
+   assert z.read('preview.png')==png
+  import tempfile
+  with tempfile.TemporaryDirectory() as temp:
+   folder=Path(temp)/'sample-folder'; folder.mkdir(); (folder/'hello.txt').write_text('hello'); (folder/'nested').mkdir(); (folder/'nested'/'world.txt').write_text('world')
+   a.set_input_files('#folder',str(folder)); expect(a.locator('#queue')).to_contain_text('sample-folder.zip')
+   a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click()
+   item=b.locator('#activity .item').filter(has_text='sample-folder.zip')
+   with b.expect_download() as folder_dl: item.get_by_role('button',name='Download',exact=True).click()
+   with ZipFile(folder_dl.value.path()) as z:
+    assert z.testzip() is None
+    assert z.read('sample-folder/hello.txt')==b'hello'
+    assert z.read('sample-folder/nested/world.txt')==b'world'
   b.click('#clearHistory'); expect(b.locator('#savedHistory')).to_contain_text('No saved file history')
-  a.set_input_files('#files',{'name':'decline.txt','mimeType':'text/plain','buffer':b'no'}); a.click('#sendFiles'); b.get_by_role('button',name='Decline',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Declined or recipient busy'); b.click('#leave'); expect(a.locator('#recipient option')).to_have_text('No connected devices'); browser.close()
+  a.set_input_files('#files',{'name':'decline.txt','mimeType':'text/plain','buffer':b'no'}); a.click('#sendFiles'); b.get_by_role('button',name='Decline',exact=True).click(); expect(a.locator('#activity')).to_contain_text('Declined or recipient busy'); b.click('#leave'); expect(a.locator('#recipient option')).to_have_text('No connected devices'); b.evaluate("navigator.serviceWorker.ready")
+  b.wait_for_function("navigator.serviceWorker.controller !== null")
+  b.context.set_offline(True); b.reload(); expect(b.locator('#offlineBanner')).to_be_visible(); b.click('#create'); expect(b.locator('#notice')).to_contain_text('Connect to the internet')
+  b.context.set_offline(False); browser.close()
   print('PASS: QR image, pairing, bidirectional text, byte-identical 1 MiB download, decline, leave, mobile layout.')
 finally:
  p.terminate();p.wait()
