@@ -1,4 +1,4 @@
-# DeviceBridge v1.2
+# DeviceBridge v1.3
 
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
@@ -28,6 +28,14 @@ The free service may sleep after 15 minutes without inbound traffic. It can take
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
 
 Default ICE configuration uses Google's public STUN endpoint. Some networks require a TURN relay; set `ICE_SERVERS` to a JSON array of RTCIceServer objects (e.g. `[ {"urls":"stun:stun.l.google.com:19302"}, {"urls":"turn:YOUR_HOST:3478","username":"...","credential":"..."} ]`). Use short-lived TURN credentials in production; configured credentials are visible to clients. TURN can cost money and relays encrypted traffic. No hosted URL or TURN service is included.
+
+## What's new in v1.3
+
+- Room-only shared notepad using peer data channels. Edits sync automatically to all connected members, latest revision wins (not collaborative character-level merging). Notes are not stored; leaving clears the local note, other connected members retain their copy.
+- Explicit clipboard paste into the message composer, followed by a separate send action. No clipboard monitoring.
+- Optional generic incoming-activity notifications while the page is open; availability depends on browser and permissions. No background transfer or push service.
+- Connection diagnostics without displaying IP addresses, plus retry controls and bounded automatic peer reset after failures. Interrupted files must be sent again; expired rooms must be rejoined or recreated.
+- Quick navigation between pairing, sending, notes and activity.
 
 ## What's new in v1.2
 
