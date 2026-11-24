@@ -1,6 +1,6 @@
 'use strict';
 // Cache only the versioned public shell. Never intercept signaling, QR codes or files.
-const CACHE='devicebridge-shell-v1.3.0';
+const CACHE='devicebridge-shell-v1.4.0';
 const SHELL=['/','/app.js','/zip.js','/style.css','/manifest.webmanifest','/icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL.map(p=>new Request(p,{cache:'reload'}))))));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const k of await caches.keys())if(k.startsWith('devicebridge-shell-')&&k!==CACHE)await caches.delete(k);await self.clients.claim();})()));
