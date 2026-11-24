@@ -54,6 +54,13 @@ try:
   import base64
   png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/x3sAAAAASUVORK5CYII=')
   a.set_input_files('#files',{'name':'preview.png','mimeType':'image/png','buffer':png}); a.click('#sendFiles'); b.get_by_role('button',name='Accept',exact=True).click(); b.get_by_role('button',name='Preview',exact=True).click(); expect(b.locator('img.media-preview')).to_be_visible(); b.get_by_role('button',name='Hide preview',exact=True).click(); expect(b.locator('img.media-preview')).to_have_count(0)
+  # Exercise the actual disk-write path using a controlled picker substitute.
+  b.evaluate("() => { window.showSaveFilePicker = async () => (await navigator.storage.getDirectory()).getFileHandle('disk-test.bin',{create:true}); }")
+  a.set_input_files('#files',{'name':'disk-test.bin','mimeType':'application/octet-stream','buffer':payload*4})
+  a.click('#sendFiles'); b.get_by_role('button',name='Save to disk',exact=True).click()
+  expect(b.locator('#activity .item').filter(has_text='disk-test.bin')).to_contain_text('Saved to disk',timeout=30000)
+  expect(a.locator('#activity .item').filter(has_text='disk-test.bin')).to_contain_text('Delivered')
+  assert b.evaluate("async () => { const f=await (await (await navigator.storage.getDirectory()).getFileHandle('disk-test.bin')).getFile(); const bytes=new Uint8Array(await f.arrayBuffer()); return bytes.length===4194304 && bytes.every((v,i)=>v===i%256); }")
   from zipfile import ZipFile
   with b.expect_download() as batch: b.click('#downloadZip')
   with ZipFile(batch.value.path()) as z:
