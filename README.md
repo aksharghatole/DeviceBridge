@@ -1,4 +1,4 @@
-# DeviceBridge v1.8
+# DeviceBridge v1.9
 
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
@@ -28,6 +28,12 @@ The free service may sleep after 15 minutes without inbound traffic. It can take
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
 
 Default ICE configuration uses Google's public STUN endpoint. Some networks require a TURN relay; set `ICE_SERVERS` to a JSON array of RTCIceServer objects (e.g. `[ {"urls":"stun:stun.l.google.com:19302"}, {"urls":"turn:YOUR_HOST:3478","username":"...","credential":"..."} ]`). Use short-lived TURN credentials in production; configured credentials are visible to clients. TURN can cost money and relays encrypted traffic. No hosted URL or TURN service is included.
+
+## What's new in v1.9
+
+- One-to-one synchronized playback of independently selected, identical local audio/video files. SHA-256 confirms file equality; only invitations and playback state travel over the existing data channel. No media upload, recording or streaming.
+- Explicit invitation acceptance, host-controlled play/pause/seek/rate, periodic best-effort drift correction and a manual playback-unlock button for browser autoplay restrictions.
+- Supported media extensions depend on browser codecs. A 64 MiB local media limit bounds hashing memory. Both devices need their own copy, and exact frame synchronization is not guaranteed. Sessions end on disconnect.
 
 ## What's new in v1.8
 

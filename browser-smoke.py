@@ -132,6 +132,32 @@ try:
   c.click('#stopScreen'); expect(e.locator('#screenVideo')).to_be_hidden()
   assert c.evaluate("() => window.testScreenStream.getTracks().every(t=>t.readyState==='ended')")
   c.evaluate("() => clearInterval(window.testScreenInterval)")
+  import io, wave
+  sample=io.BytesIO()
+  with wave.open(sample,'wb') as wav:
+   wav.setnchannels(1); wav.setsampwidth(2); wav.setframerate(8000); wav.writeframes(b'\x00\x00'*8000*20)
+  media={'name':'watch.wav','mimeType':'audio/wav','buffer':sample.getvalue()}
+  c.set_input_files('#watchFile',media); expect(c.locator('#startWatch')).to_be_enabled(timeout=15000)
+  c.click('#startWatch'); expect(e.locator('#watchConsent')).to_be_visible()
+  e.click('#acceptWatch')
+  e.set_input_files('#watchFile',{'name':'different.wav','mimeType':'audio/wav','buffer':b'different'})
+  expect(e.locator('#watchStatus')).to_contain_text('Different file')
+  e.set_input_files('#watchFile',media)
+  expect(c.locator('#watchStatus')).to_contain_text('Both devices ready',timeout=15000)
+  c.evaluate("async () => { await document.querySelector('#watchPlayer').play(); }")
+  e.click('#watchUnlock')
+  deadline=time.monotonic()+10
+  while time.monotonic()<deadline:
+   if e.evaluate("() => !document.querySelector('#watchPlayer').paused"): break
+   time.sleep(.2)
+  else: raise AssertionError("Viewer did not play")
+  c.evaluate("() => { const p=document.querySelector('#watchPlayer');p.pause();p.currentTime=10; }")
+  deadline=time.monotonic()+10
+  while time.monotonic()<deadline:
+   if e.evaluate("() => { const p=document.querySelector('#watchPlayer');return p.paused&&Math.abs(p.currentTime-10)<1; }"): break
+   time.sleep(.2)
+  else: raise AssertionError("Viewer did not synchronize pause and seek")
+  c.click('#stopWatch'); expect(e.locator('#stopWatch')).to_be_hidden()
   browser.close()
   print('PASS: QR image, pairing, bidirectional text, byte-identical 1 MiB download, decline, leave, mobile layout.')
 finally:

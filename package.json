@@ -1,1 +1,1 @@
-{"name":"devicebridge","version":"1.8.0","private":true,"description":"Private browser-to-browser device sharing","scripts":{"start":"node server.cjs","test":"node --test test.cjs"},"engines":{"node":">=18"}}
+{"name":"devicebridge","version":"1.9.0","private":true,"description":"Private browser-to-browser device sharing","scripts":{"start":"node server.cjs","test":"node --test test.cjs"},"engines":{"node":">=18"}}
