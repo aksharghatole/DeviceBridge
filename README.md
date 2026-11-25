@@ -1,4 +1,4 @@
-# DeviceBridge v2.0
+# DeviceBridge v2.1
 
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
@@ -28,6 +28,12 @@ The free service may sleep after 15 minutes without inbound traffic. It can take
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
 
 Default ICE configuration uses Google's public STUN endpoint. Some networks require a TURN relay; set `ICE_SERVERS` to a JSON array of RTCIceServer objects (e.g. `[ {"urls":"stun:stun.l.google.com:19302"}, {"urls":"turn:YOUR_HOST:3478","username":"...","credential":"..."} ]`). Use short-lived TURN credentials in production; configured credentials are visible to clients. TURN can cost money and relays encrypted traffic. No hosted URL or TURN service is included.
+
+## What's new in v2.1
+
+- Optional local partial-file recovery across a receiving tab reload. Enable the checkbox before joining. The receiver stores checkpoints in IndexedDB at approximately 1 MiB increments, up to a 32 MiB file. Rejoin the same room in the same tab; the original sender must remain open with the file. The sender may select the rejoined recipient and explicitly confirm retry, then the receiver approves the saved offset.
+- The checkpoint is valid for five minutes after its last saved update; expired entries are cleaned on app startup or recovery lookup. Browser storage may retain expired bytes until cleanup runs. Completion, explicit discard and Leave room delete the checkpoint. The feature is off by default and no partial bytes go to the server.
+- This does not recover a closed tab, sender reload, server restart, or direct-to-disk transfer. Storage quotas and browser eviction may prevent recovery. Only completed checkpoint transactions survive reload; uncommitted trailing bytes are resent.
 
 ## What's new in v2.0
 
