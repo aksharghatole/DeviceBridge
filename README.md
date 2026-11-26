@@ -1,4 +1,4 @@
-# DeviceBridge v2.1
+# DeviceBridge v2.2
 
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
@@ -28,6 +28,12 @@ The free service may sleep after 15 minutes without inbound traffic. It can take
 This is a single Node HTTP service, not a static site. Upload the contents to a repository and deploy it to a Node-compatible host using `npm start`. The server listens on `PORT` (default 3000). Configure TLS at the hosting provider or reverse proxy. SSE responses must not be buffered and the host must permit long-lived HTTP connections. Run one server instance because rooms are in memory. GitHub Pages by itself cannot run the signaling server. A Dockerfile is included.
 
 Default ICE configuration uses Google's public STUN endpoint. Some networks require a TURN relay; set `ICE_SERVERS` to a JSON array of RTCIceServer objects (e.g. `[ {"urls":"stun:stun.l.google.com:19302"}, {"urls":"turn:YOUR_HOST:3478","username":"...","credential":"..."} ]`). Use short-lived TURN credentials in production; configured credentials are visible to clients. TURN can cost money and relays encrypted traffic. No hosted URL or TURN service is included.
+
+## What's new in v2.2
+
+- Opt-in reusable WebRTC browser certificate stored using IndexedDB (where supported). Devices can independently compare their connection codes, then explicitly remember the verified remote SHA-256 certificate fingerprint. In subsequent rooms, matching negotiated certificates are recognized after the encrypted connection opens; names are not authentication.
+- Enable remembered identities on both devices for reuse. Certificate expiration, browser storage deletion or another browser profile requires manual verification again. No permanent account or server-side device registry.
+- Local remembered-device list, individual revocation, forget all and local identity reset. Disable the option to use temporary certificates without using saved trust. The feature assumes trusted application code and browser storage; it does not replace independent security review.
 
 ## What's new in v2.1
 

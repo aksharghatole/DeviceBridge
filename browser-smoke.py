@@ -199,6 +199,31 @@ try:
   with h.expect_download() as restored: recovered_item.get_by_role('button',name='Download',exact=True).click()
   assert Path(restored.value.path()).read_bytes()==payload*8
   assert h.evaluate("async () => !(await recoveryTransaction('readonly',(store,done)=>{const req=store.get(recoverySlot);req.onsuccess=()=>done(req.result)}))")
+  # Remember verified certificates across new rooms and reloads.
+  i=browser.new_page(); j=browser.new_page()
+  for page in [i,j]:
+   page.goto('http://localhost:3418'); page.check('#strictPairing'); page.check('#rememberIdentity'); page.on('dialog',lambda d:d.accept())
+  i.fill('#name','Trusted laptop'); i.click('#create'); expect(i.locator('#roomCode')).not_to_have_text('')
+  j.fill('#name','Trusted phone'); j.fill('#roomInput',i.locator('#roomCode').inner_text()); j.click('#joinForm button')
+  for page in [i,j]:
+   expect(page.get_by_role('button',name='Verify code',exact=True)).to_be_visible(timeout=15000)
+  assert i.locator('.pair-code').inner_text()==j.locator('.pair-code').inner_text()
+  for page in [i,j]:
+   page.get_by_role('button',name='Verify code',exact=True).click()
+   page.get_by_role('button',name='Remember device',exact=True).click()
+   expect(page.locator('#trustedList .history-row')).to_have_count(1)
+   page.click('#leave'); page.reload()
+   expect(page.locator('#rememberIdentity')).to_be_checked(); page.check('#strictPairing')
+  i.click('#create'); expect(i.locator('#roomCode')).not_to_have_text('')
+  j.fill('#roomInput',i.locator('#roomCode').inner_text()); j.click('#joinForm button')
+  expect(i.locator('#recipient option')).to_have_text('Trusted phone',timeout=15000)
+  expect(j.locator('#recipient option')).to_have_text('Trusted laptop',timeout=15000)
+  expect(i.locator('#devices')).to_contain_text('Recognized saved certificate')
+  i.fill('#message','Remembered connection'); i.click('#sendText'); expect(j.locator('#activity')).to_contain_text('Remembered connection')
+  i.locator('#trustedList').get_by_role('button',name='Forget device',exact=True).click()
+  expect(i.locator('#trustedList')).to_contain_text('No remembered devices')
+  expect(i.locator('#recipient option')).to_have_text('No connected devices',timeout=15000)
+  i.click('#leave'); i.click('#resetIdentity'); expect(i.locator('#rememberIdentity')).not_to_be_checked()
   browser.close()
   print('PASS: QR image, pairing, bidirectional text, byte-identical 1 MiB download, decline, leave, mobile layout.')
 finally:
