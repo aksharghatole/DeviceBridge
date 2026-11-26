@@ -1,5 +1,7 @@
 # DeviceBridge v2.1
 
+[Run locally](#run-on-your-computer) · [Deployment and reference](#deployment-and-reference)
+
 A browser-based cross-device sharing prototype. Pair devices using an invite link, QR code or a random 10-character room code. No account, database or application file storage. Node.js serves the interface and exchanges only room membership and WebRTC signaling. WebRTC carries text and file content over an encrypted data channel. Rooms support six devices.
 
 ## Run on your computer
@@ -11,6 +13,11 @@ A browser-based cross-device sharing prototype. Pair devices using an invite lin
 5. Join on the second device using the QR code, invite link or room code. Wait until it is shown as connected. Select a file or enter text and send it. The recipient must accept each file and then click Download.
 
 Some mobile browsers restrict WebRTC or clipboard access on insecure HTTP. If local HTTP does not work, deploy over HTTPS. Both browser tabs must remain open. Do not use the localhost invite on a second physical device.
+
+## Deployment and reference
+
+<details>
+<summary>Deployment, connectivity and technical reference</summary>
 
 ## Deploy online (Render)
 
@@ -121,3 +128,5 @@ Run `npm test` for HTTP room lifecycle, QR generation and signaling authorizatio
 ## Third-party notice
 
 Vendored QRCode JavaScript by Kazuhiko Arase (MIT, copyright 2009), adapted by qrcode-terminal. See vendor/LICENSE and source headers. All other app files are original for this project.
+
+</details>
